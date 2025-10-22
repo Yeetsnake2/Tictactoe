@@ -13,7 +13,12 @@ void random_turn() {
     player = rand() % 2;
 }
 
-void move(int position) {
+int move(int position) {
+    if (tictactoe[position] == 'X' || tictactoe[position] == 'O') {
+        cout << "Invalid move. Try again." << endl;
+        return 1;
+    }
+
     if (turn % 2 - player)
     {
         tictactoe[position] = 'O';
@@ -24,6 +29,7 @@ void move(int position) {
         tictactoe[position] = 'X';
         turn++;
     }
+    return 0;
 }
 
 void win_check() {
