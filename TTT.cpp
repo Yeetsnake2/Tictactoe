@@ -87,6 +87,7 @@ void print_board() {
 
 int main() {
     int pos;
+    random_turn();
     while (turn < 9 && winner == 2)
     {
         print_board();
