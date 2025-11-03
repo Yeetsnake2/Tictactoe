@@ -3,16 +3,29 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "command": "C:/msys64/mingw64/bin/g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-std=c++17",
+                "-Wall",
+                "-Wextra",
+                "-lfltk",
+                "-lfltk_images",
+                "-lfltk_forms",
+                "-lfltk_gl",
+                "-lcomctl32",
+                "-lole32",
+                "-luuid",
+                "-lgdi32",
+                "-lws2_32",
+                "-lopengl32"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "C:/msys64/mingw64/bin"
             },
             "problemMatcher": [
                 "$gcc"
