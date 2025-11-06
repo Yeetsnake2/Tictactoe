@@ -8,12 +8,14 @@
 #include <FL/Fl_Group.H>
 #include <FL/fl_ask.H>
 #include <cstdint>
+#include <limits>
 using namespace std;
 
-char tictactoe[9] = {'\0','\0','\0','\0','\0','\0','\0','\0','\0'};
+char tictactoe[9] = {'1','2','3','4','5','6','7','8','9'};
 int turn = 0;
 int player = 0; // 0 for 'X' goes first, 1 for 'O' goes first
 int winner = 2; // 1 for 'X', -1 for 'O', 0 for draw, 2 for ongoing
+int global_depth = 10;
 
 void random_turn() {
     srand(time(0));
@@ -40,33 +42,35 @@ int move(int position) {
     }
 }
 
-void win_check() {
+bool win_check() {
     for (int i = 0; i < 9; i += 3) {
         if (tictactoe[i] == tictactoe[i + 1] && tictactoe[i + 1] == tictactoe[i + 2]) {
             winner = (tictactoe[i] == 'X') ? 1 : -1;
-            return;
+            return true;
         }
     }
     
     for (int i = 0; i < 3; i++) {
         if (tictactoe[i] == tictactoe[i + 3] && tictactoe[i + 3] == tictactoe[i + 6]) {
             winner = (tictactoe[i] == 'X') ? 1 : -1;
-            return;
+            return true;
         }
     }
     
     if (tictactoe[0] == tictactoe[4] && tictactoe[4] == tictactoe[8]) {
         winner = (tictactoe[0] == 'X') ? 1 : -1;
-        return;
+        return true;
     }
     if (tictactoe[2] == tictactoe[4] && tictactoe[4] == tictactoe[6]) {
         winner = (tictactoe[2] == 'X') ? 1 : -1;
-        return;
+        return true;
     }
 
     if (turn == 9) {
         winner = 0;
+        return false;
     }
+    return false;
 }
 
 void declare_winner() {
@@ -92,18 +96,121 @@ void print_board() {
     
 }
 
+int minimax(int max_depth = global_depth, bool maximizing = true) {
+    int best_score;
+    if (max_depth == 0) return rand() % 3 - 1;
+    if (win_check()) return winner * -1;
+    if (turn == 9) return 0;
+    if (maximizing) {
+        best_score = numeric_limits<int>::min();
+        int current_score;
+        for (int i = 0; i < 9; ++i) {
+            if (tictactoe[i] != 'X' && tictactoe[i] != 'O') {
+                tictactoe[i] = 'O';
+                turn++;
+                current_score = minimax(max_depth - 1, false);
+                tictactoe[i] = '1' + i;
+                turn--;
+                winner = 2;
+                best_score = max(best_score, current_score);
+            }
+        }
+    }
+    else {
+        best_score = numeric_limits<int>::max();
+        int current_score;
+        for (int i = 0; i < 9; ++i) {
+            if (tictactoe[i] != 'X' && tictactoe[i] != 'O') {
+                tictactoe[i] = 'X';
+                turn++;
+                current_score = minimax(max_depth - 1, true);
+                tictactoe[i] = '1' + i;
+                turn--;
+                winner = 2;
+                best_score = min(best_score, current_score);
+            }
+        }
+    }
+    return best_score;
+}
+
+int get_best_move(bool maximizing = true, int depth = global_depth) {
+    int best_score;
+    int best_move = -1;
+    int current_score;
+    if (depth < 0){
+        best_move = rand() % 9;
+        while (tictactoe[best_move] == 'X' || tictactoe[best_move] == 'O') {
+            best_move = rand() % 9;
+        }
+        return best_move;
+    }
+    if (maximizing) {
+        best_score = numeric_limits<int>::min();
+        for (int i = 0; i < 9; ++i) {
+            if (tictactoe[i] != 'X' && tictactoe[i] != 'O') {
+                tictactoe[i] = 'O';
+                turn++;
+                current_score = minimax(depth, false);
+                tictactoe[i] = '1' + i;
+                turn--;
+                winner = 2;
+                if (current_score > best_score) {
+                    best_score = current_score;
+                    best_move = i;
+                }
+            
+            }
+        }
+    }
+    else {
+        best_score = numeric_limits<int>::max();
+        for (int i = 0; i < 9; ++i) {
+            if (tictactoe[i] != 'X' && tictactoe[i] != 'O') {
+                tictactoe[i] = 'X';
+                turn++;
+                current_score = minimax(depth, true);
+                tictactoe[i] = '1' + i;
+                turn--;
+                winner = 2;
+                if (current_score < best_score) {
+                    best_score = current_score;
+                    best_move = i;
+                }
+            
+            }
+        }
+    }
+    return best_move;
+}
 
 void go_single(Fl_Widget *w, void *data) {
     Fl_Group **groups = (Fl_Group**)data;
+    global_depth = fl_choice("Choose Difficulty", "Easy", "Medium", "Hard") - 1;
+    global_depth = global_depth ? global_depth * 10 : 1;
     turn = 0;
+    winner = 2;
     random_turn();
     groups[0]->hide();
     groups[1]->show();
+
+    if (turn % 2 - player) {
+        int best_move = get_best_move();
+        move(best_move);
+        groups[1]->child(best_move + 1)->label("O");
+        print_board();
+        cout << "Best move: " << get_best_move(false) << endl;
+    }
+
+    groups[1]->child(0)->label("Player X's turn");
+
 }
 
 void go_two(Fl_Widget *w, void *data) {
     Fl_Group **groups = (Fl_Group**)data;
     turn = 0;
+    winner = 2;
+    global_depth = 10;
     random_turn();
     groups[0]->hide();
     groups[2]->show();
@@ -118,6 +225,13 @@ void go_home(Fl_Widget *w, void *data) {
     groups[2]->hide();
     groups[0]->show();
 
+    Fl_Group *single_group = groups[1];
+    for (int i = 0; i < single_group->children() - 1; ++i) {
+        Fl_Widget *child = single_group->child(i);
+        Fl_Button *btn = dynamic_cast<Fl_Button*>(child);
+        if (btn) btn->label("\0");
+    }
+
     Fl_Group *two_group = groups[2];
     for (int i = 0; i < two_group->children() - 1; ++i) {
         Fl_Widget *child = two_group->child(i);
@@ -125,7 +239,7 @@ void go_home(Fl_Widget *w, void *data) {
         if (btn) btn->label("\0");
     }
     for (int i = 0; i < 9; ++i) {
-        tictactoe[i] = '\0';
+        tictactoe[i] = '1' + i;
     }
 
 }
@@ -135,17 +249,56 @@ void cell_click(Fl_Widget *w, void *data) {
     int index = (int)(intptr_t)info[0];
     Fl_Box *msg = (Fl_Box*)info[1];
     Fl_Button *btn = (Fl_Button*)w;
-    if (move(index)) {
+    Fl_Group *two_group = (Fl_Group*)msg->parent();
+    Fl_Button *back_button = (Fl_Button*)two_group->child(two_group->children() - 1);
+    if (winner == 2 && move(index)) {
         if (tictactoe[index] == 'X') {
             btn->label("X");
+            if (win_check())
+            {
+                declare_winner();
+                (winner + 1) ? msg->label("Player X wins!") : msg->label("Player O wins!");
+                fl_message("Game Over!");
+                return;
+            }
+            else if (winner == 0)
+            {
+                declare_winner();
+                msg->label("It's a draw!");
+                fl_message("Game Over!");
+                return;
+            }
+            
             msg->label("Player O's turn");
             print_board();
+            cout << "Best move: " << get_best_move() << endl;
         } else {
             btn->label("O");
+            if (win_check())
+            {
+                declare_winner();
+                (winner + 1) ? msg->label("Player X wins!") : msg->label("Player O wins!");
+                fl_message("Game Over!");
+                return;
+            }
+            else if (winner == 0)
+            {
+                declare_winner();
+                msg->label("It's a draw!");
+                fl_message("Game Over!");
+                return;
+            }
             msg->label("Player X's turn");
             print_board();
+            cout << "Best move: " << get_best_move(false) << endl;
         }
     }
+    else if (winner != 2)
+    {
+        back_button->do_callback();
+        return;
+    }
+    
     else
     {
         msg->label("Invalid move!");
@@ -153,6 +306,68 @@ void cell_click(Fl_Widget *w, void *data) {
     }
     
     
+}
+
+void cell_click2(Fl_Widget *w, void *data) {
+    void **info = (void**)data;
+    int index = (int)(intptr_t)info[0];
+    Fl_Box *msg = (Fl_Box*)info[1];
+    Fl_Button *btn = (Fl_Button*)w;
+    Fl_Group *two_group = (Fl_Group*)msg->parent();
+    Fl_Button *back_button = (Fl_Button*)two_group->child(two_group->children() - 1);
+    if (winner == 2 && move(index)) {
+        if (tictactoe[index] == 'X') {
+            btn->label("X");
+            if (win_check())
+            {
+                declare_winner();
+                (winner + 1) ? msg->label("Player X wins!") : msg->label("Player O wins!");
+                fl_message("Game Over!");
+                return;
+            }
+            else if (winner == 0)
+            {
+                declare_winner();
+                msg->label("It's a draw!");
+                fl_message("Game Over!");
+                return;
+            }
+
+            int best_move = get_best_move();
+            move(best_move);
+            two_group->child(best_move + 1)->label("O");
+            if (win_check())
+            {
+                declare_winner();
+                (winner + 1) ? msg->label("Player X wins!") : msg->label("The Computer wins!");
+                fl_message("Game Over!");
+                return;
+            }
+            else if (winner == 0)
+            {
+                declare_winner();
+                msg->label("It's a draw!");
+                fl_message("Game Over!");
+                return;
+            }
+
+            msg->label("Player X's turn");
+
+            print_board();
+            cout << "Best move: " << get_best_move(false) << endl;
+        }
+    }
+    else if (winner != 2)
+    {
+        back_button->do_callback();
+        return;
+    }
+    
+    else
+    {
+        msg->label("Invalid move!");
+        return;
+    }
 }
 
 int main() {
@@ -168,8 +383,19 @@ int main() {
     home_group->end();
 
     Fl_Group *single_group = new Fl_Group(0, 0, 400, 300);
-        Fl_Box *single_label = new Fl_Box(120, 100, 160, 40, "Single Player Mode");
-        Fl_Button *back_from_single = new Fl_Button(150, 180, 100, 30, "Back");
+        Fl_Box *single_label = new Fl_Box(120, 20, 160, 40, "\0");
+        Fl_Button *cells2[9];
+        int cell_size2 = 60;
+        int start_x2 = 110, start_y2 = 60;
+        void *void_arr2[9][2];
+        for (int i = 0; i < 9; ++i) {
+            int row = i / 3, col = i % 3;
+            void_arr2[i][0] = (void*)(intptr_t)i;
+            void_arr2[i][1] = (void*)single_label;
+            cells2[i] = new Fl_Button(start_x2 + col * cell_size2, start_y2 + row * cell_size2, cell_size2, cell_size2, "");
+            cells2[i]->callback(cell_click2, void_arr2[i]);
+        }
+        Fl_Button *back_from_single = new Fl_Button(150, 240, 100, 30, "Back");
     single_group->end();
     single_group->hide();
 
