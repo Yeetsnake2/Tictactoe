@@ -98,7 +98,7 @@ void print_board() {
 
 int minimax(int max_depth = global_depth, bool maximizing = true) {
     int best_score;
-    if (max_depth == 0) return rand() % 3 - 1;
+    if (max_depth == 0) return rand() % 5 - 2;
     if (win_check()) return winner * -1;
     if (turn == 9) return 0;
     if (maximizing) {
@@ -187,7 +187,7 @@ int get_best_move(bool maximizing = true, int depth = global_depth) {
 void go_single(Fl_Widget *w, void *data) {
     Fl_Group **groups = (Fl_Group**)data;
     global_depth = fl_choice("Choose Difficulty", "Easy", "Medium", "Hard") - 1;
-    global_depth = global_depth ? global_depth * 10 : 1;
+    global_depth = global_depth ? global_depth * 10 : 2;
     turn = 0;
     winner = 2;
     random_turn();
