@@ -17,11 +17,13 @@ int player = 0; // 0 for 'X' goes first, 1 for 'O' goes first
 int winner = 2; // 1 for 'X', -1 for 'O', 0 for draw, 2 for ongoing
 int global_depth = 10;
 
+//randomizes which player goes first
 void random_turn() {
     srand(time(0));
     player = rand() % 2;
 }
 
+//steps the game and updates the logical board
 int move(int position) {
     if (tictactoe[position] == 'X' || tictactoe[position] == 'O') {
         cout << "Invalid move. Try again." << endl;
@@ -42,6 +44,7 @@ int move(int position) {
     }
 }
 
+//checks for win/draw
 bool win_check() {
     for (int i = 0; i < 9; i += 3) {
         if (tictactoe[i] == tictactoe[i + 1] && tictactoe[i + 1] == tictactoe[i + 2]) {
@@ -73,6 +76,7 @@ bool win_check() {
     return false;
 }
 
+//debug func
 void declare_winner() {
     if (winner == 1) {
         cout << "X wins!" << endl;
@@ -83,6 +87,7 @@ void declare_winner() {
     }
 }   
 
+//debug func
 void print_board() {
     for (int i = 0; i < 3; i++)
     {
@@ -96,6 +101,7 @@ void print_board() {
     
 }
 
+//travels recursively through the available state space of the game and returning the score for the best move
 int minimax(int max_depth = global_depth, bool maximizing = true) {
     int best_score;
     if (max_depth == 0) return rand() % 5 - 2;
@@ -134,6 +140,7 @@ int minimax(int max_depth = global_depth, bool maximizing = true) {
     return best_score;
 }
 
+//uses minimax to return the index of the best move
 int get_best_move(bool maximizing = true, int depth = global_depth) {
     int best_score;
     int best_move = -1;
@@ -184,6 +191,7 @@ int get_best_move(bool maximizing = true, int depth = global_depth) {
     return best_move;
 }
 
+//resets the logical game and initiates the single player mode
 void go_single(Fl_Widget *w, void *data) {
     Fl_Group **groups = (Fl_Group**)data;
     global_depth = fl_choice("Choose Difficulty", "Easy", "Medium", "Hard") - 1;
@@ -206,6 +214,7 @@ void go_single(Fl_Widget *w, void *data) {
 
 }
 
+//resets the logical game and initiates the two player mode
 void go_two(Fl_Widget *w, void *data) {
     Fl_Group **groups = (Fl_Group**)data;
     turn = 0;
@@ -219,6 +228,7 @@ void go_two(Fl_Widget *w, void *data) {
 
 }
 
+//resets the graphical board and returns to the home menu
 void go_home(Fl_Widget *w, void *data) {
     Fl_Group **groups = (Fl_Group**)data;
     groups[1]->hide();
@@ -258,14 +268,14 @@ void cell_click(Fl_Widget *w, void *data) {
             {
                 declare_winner();
                 (winner + 1) ? msg->label("Player X wins!") : msg->label("Player O wins!");
-                fl_message("Game Over!");
+                fl_message((winner + 1) ? "Player X wins!" : "Player O wins!");
                 return;
             }
             else if (winner == 0)
             {
                 declare_winner();
                 msg->label("It's a draw!");
-                fl_message("Game Over!");
+                fl_message("It's a draw!");
                 return;
             }
             
@@ -278,14 +288,14 @@ void cell_click(Fl_Widget *w, void *data) {
             {
                 declare_winner();
                 (winner + 1) ? msg->label("Player X wins!") : msg->label("Player O wins!");
-                fl_message("Game Over!");
+                fl_message((winner + 1) ? "Player X wins!" : "Player O wins!");
                 return;
             }
             else if (winner == 0)
             {
                 declare_winner();
                 msg->label("It's a draw!");
-                fl_message("Game Over!");
+                fl_message("It's a draw!");
                 return;
             }
             msg->label("Player X's turn");
@@ -322,14 +332,14 @@ void cell_click2(Fl_Widget *w, void *data) {
             {
                 declare_winner();
                 (winner + 1) ? msg->label("Player X wins!") : msg->label("Player O wins!");
-                fl_message("Game Over!");
+                fl_message((winner + 1) ? "Player X wins!" : "Player O wins!");
                 return;
             }
             else if (winner == 0)
             {
                 declare_winner();
                 msg->label("It's a draw!");
-                fl_message("Game Over!");
+                fl_message("It's a draw!");
                 return;
             }
 
@@ -340,14 +350,14 @@ void cell_click2(Fl_Widget *w, void *data) {
             {
                 declare_winner();
                 (winner + 1) ? msg->label("Player X wins!") : msg->label("The Computer wins!");
-                fl_message("Game Over!");
+                fl_message((winner + 1) ? "Player X wins!" : "Player O wins!");
                 return;
             }
             else if (winner == 0)
             {
                 declare_winner();
                 msg->label("It's a draw!");
-                fl_message("Game Over!");
+                fl_message("It's a draw!");
                 return;
             }
 
@@ -371,8 +381,6 @@ void cell_click2(Fl_Widget *w, void *data) {
 }
 
 int main() {
-    int window_length = 400;
-    int window_height = 300;
     Fl_Window *main_win = new Fl_Window(400, 300, "Tic Tac Toe");
 
     Fl_Group *home_group = new Fl_Group(0, 0, 400, 300);
@@ -387,7 +395,7 @@ int main() {
         Fl_Button *cells2[9];
         int cell_size2 = 60;
         int start_x2 = 110, start_y2 = 60;
-        void *void_arr2[9][2];
+        void *void_arr2[9][2]; //the callback funcs for fltk takes one external input in the form of a void pointer; this arr allows sending two for each button
         for (int i = 0; i < 9; ++i) {
             int row = i / 3, col = i % 3;
             void_arr2[i][0] = (void*)(intptr_t)i;
